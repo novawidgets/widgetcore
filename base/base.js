@@ -418,11 +418,6 @@
         me[methodName]._isAspected = true;
     }
 
-    // 将字符串转为首字母大写
-    function firstLetterUc(str) {
-        return str.charAt(0).toUpperCase() + str.substring(1);
-    }
-
     // 将字符串转为首字母小写
     function firstLetterLc(str) {
         return str.charAt(0).toLowerCase() + str.substring(1);
