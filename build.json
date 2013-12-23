@@ -1,0 +1,36 @@
+{
+    "class": {
+        "version": "1.0.0",
+        "files" : {
+        },
+        "module": "base",
+        "src": "src/base/class.js",
+        "requires": {
+        }
+    },
+    "base": {
+        "version": "1.0.0",
+        "files": {
+        },
+        "module": "base",
+        "src": "src/base/base.js",
+        "requires": {
+            "class": "base/1.0.0/class"
+        }
+    },
+    "widget": {
+        "version": "1.0.0",
+        "files": {
+            "build/widget.js" : [
+                "src/base/class.js",
+                "src/base/base.js",
+                "src/widget/widget.js"
+            ]
+        },
+        "module": "widget",
+        "src": "src/widget/widget.js",
+        "requires": {
+            "base": "base/1.0.0/base"
+        }
+    }
+}

@@ -1,0 +1,10 @@
+*.bak
+*.zip
+*.gz
+_site
+.DS_STORE
+*.swp
+
+node_modules/*
+!node_modules/grunt-module-transfer
+!node_modules/grunt-qiwoobuild
