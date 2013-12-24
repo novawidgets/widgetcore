@@ -95,6 +95,18 @@ define(['module/base/1.0.0/base'], function(Base) {
                     });
                     ins.trigger('activate', [1, 2]);
                 });
+                it('should be trigger in the order when its bound', function() {
+                    var ins = new Base();
+                    var a = 0;
+                    ins.on('activate', function() {
+                        a = 1;
+                    });
+                    ins.on('activate', function() {
+                        a = 2;
+                    });
+                    ins.trigger('activate');
+                    expect(a).to.equal(2);
+                });
         });
 
     })
