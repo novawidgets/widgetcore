@@ -16,8 +16,6 @@ define(['module/base/1.0.0/base'], function(Base) {
                 expect(callback.callCount).to.equal(1);
                 expect(result).to.equal(1);
             });
-        });
-        describe('before', function() {
             it('the function should not be called if the before function return false', function() {
                 var callback = function() {
                     result = this.a;
@@ -29,6 +27,20 @@ define(['module/base/1.0.0/base'], function(Base) {
                 ins.before('say', callback, context);
                 ins.say();
                 expect(say.callCount).to.equal(0);
+            });
+            it('the after bound handlers should not be called if the before function return false', function() {
+                var callback = function() {
+                    result = this.a;
+                    return false;
+                };
+                var cb2 = sinon.spy();
+                var ins = new Base();
+                var say = function() {console.log('hello')};
+                ins.say = say;
+                ins.before('say', callback, context);
+                ins.before('say', cb2, context);
+                ins.say();
+                expect(cb2.callCount).to.equal(0);
             });
         });
         describe('after', function() {
@@ -60,6 +72,19 @@ define(['module/base/1.0.0/base'], function(Base) {
                     expect(arguments[2]).to.equal('hehe');
                 });
                 ins.say('haha', 'hehe');
+            }); 
+
+            it('this should be the instance of base', function() {
+                var MyClass = Base.extend({
+                    a: 1,
+                    say: function() {}
+                });
+                var ins = new MyClass();
+                ins.a = 2;
+
+                MyClass.prototype.before('say', function() {
+                    expect(this.a).to.equal(2);
+                });
             }); 
         });
     });

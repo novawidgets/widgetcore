@@ -55,6 +55,41 @@ define(['module/base/1.0.0/base'], function(Base) {
                 ins.trigger('activate reset');
                 expect(callback.callCount).to.equal(2);
             });
+            it('an event should generate a public event object for its handlers', function() {
+                var tempEv;
+                var ins = new Base();
+
+                ins.on('test', function(ev) {
+                    tempEv = ev;
+                });
+                ins.on('test', function(ev) {
+                    expect(ev).to.equal(tempEv);
+                });
+            });
+            it('ev.preventDefault() should prevent the after bound handlers', function() {
+                var callback = sinon.spy();
+                var ins = new Base();
+
+                ins.on('test', function(ev) {
+                    ev.preventDefault();
+                })
+                ins.on('test', callback);
+
+                ins.trigger('test');
+                expect(callback.callCount).to.equal(0);
+            });
+            it('a false return value should prevent the after bound handlers', function() {
+                var callback = sinon.spy();
+                var ins = new Base();
+
+                ins.on('test', function(ev) {
+                    return false;
+                })
+                ins.on('test', callback);
+
+                ins.trigger('test');
+                expect(callback.callCount).to.equal(0);
+            });
         });
 
         describe('context', function() {

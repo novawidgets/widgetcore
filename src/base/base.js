@@ -35,6 +35,24 @@
     * this.after(methodName, callback, context)
     *
     * */
+
+    var CustEvent = Class.extend({
+        initialize: function(target, type, eventArgs) {
+            $.extend(this, {
+                target: target,                   
+                type: type, 
+                timeStamp: new Date() - 0,
+            }, eventArgs);
+        },
+
+        _defaultPrevented: false, 
+
+        // 阻止任何该事件的处理函数被调用
+        preventDefault: function() {
+            this._defaultPrevented = true;
+        }
+    });
+
     var Base = Class.extend({
         // Base生命周期
         initialize: function(config) {
@@ -111,26 +129,40 @@
 
         // this.trigger('switch', [args1, args2]);
         // this.trigger('switch change', [args1, args2]);
+        // @return true/false
         trigger: function(events) {
             var cache = this._events, event, 
-                me = this;
+                me = this, 
+                returnValue = true;
 
             if(!cache) return me;
 
             events = events.split(EVENT_SPLITTER);
             while(event = events.shift()) {
                 var handlers = cache[event];
+                var ev = new CustEvent(me, event, {a: 1, b: 2});
                 if(handlers) {
-                    for(var len = handlers.length, i = len - 2; i >= 0; i -=2 ) {
+                    for(var i = 0, len = handlers.length; i < len; i += 2) {
                         var ctx = handlers[i + 1] || me;
                         var args = arguments[1] ? arguments[1].slice() : [];
-                        args.unshift({type: event, target: me, timeStamp: (new Date()) - 0});
+                        args.unshift(ev);
+
                         var ret = handlers[i].apply(ctx, args); 
-                        if(ret == false) {me._preventDefault = true;}
+
+                        // 当callback返回false时，阻止事件继续触发
+                        if(ret === false) {
+                            ev.preventDefault();
+                        }
+
+                        if(ev._defaultPrevented) {
+                            returnValue = false;
+                            break;
+                        }
+
                     }
                 }
             }
-            return me;
+            return returnValue;
         },
 
         /**************************** Aspect *******************************/
@@ -284,8 +316,7 @@
 
             // 获取原型链 
             var protochain = [],                            
-                proto = me.constructor.prototype,            
-                curProto = proto; 
+                proto = me.constructor.prototype;            
             while(proto && !$.isEmptyObject(proto)) {
                 protochain.push(proto);
                 proto = proto.constructor.superclass;
@@ -403,19 +434,17 @@
     }
 
     function wrap(methodName) {
+        var method = this[methodName];
+        var ret, beforeFunRet;
         var me = this;
-        var method = me[methodName];
-        var ret;
-        me[methodName] = function() {
-            me._preventDefault = false;  
-            // trigger时，如果回调函数返回false, 回将me._preventDefault置为true
-            me.trigger('before:' + methodName, Array.prototype.slice.call(arguments));
-            if(me._preventDefault) {return;}
-            ret = method.apply(me, arguments);
-            me.trigger('after:' + methodName, Array.prototype.slice.call(arguments));
+        this[methodName] = function() {
+            beforeFunRet = this.trigger('before:' + methodName, Array.prototype.slice.call(arguments));
+            if(beforeFunRet === false) { return; }
+            ret = method.apply(this, arguments);
+            this.trigger('after:' + methodName, Array.prototype.slice.call(arguments));
             return ret;
         };
-        me[methodName]._isAspected = true;
+        this[methodName]._isAspected = true;
     }
 
     // 将字符串转为首字母小写
