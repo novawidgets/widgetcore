@@ -1,5 +1,12 @@
-(function(define, global) { 
-define(['module/base/1.0.0/class'], function(Class) {
+(function(root, factory) {
+if(typeof exports === 'object') {
+module.exports = factory();
+} else if(typeof define === 'function' && define.amd) {
+define(['module/base/1.0.0/class'], factory);
+} else {
+root['Base'] = factory();
+}
+})(this, function(Class) {
 Class = Class || this.Class;
 
 /*
@@ -428,5 +435,4 @@ Class = Class || this.Class;
     }
 
     return Base;
-}); 
-}) ( typeof define === 'function' && define.amd ? define : function (name, requires, factory) { if(typeof name === 'function') { factory = name; } else if(typeof requires === 'function') { factory = requires; } if(typeof module != 'undefined'){ module.exports = factory(require); }else if(typeof window != 'undefined'){ window.Base= factory(); } }, this);
+});
