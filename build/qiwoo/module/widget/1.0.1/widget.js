@@ -2,7 +2,7 @@
 if(typeof exports === 'object') {
 module.exports = factory();
 } else if(typeof define === 'function' && define.amd) {
-define(['module/base/1.0.0/base'], factory);
+define(['module/base/1.0.1/base'], factory);
 } else {
 root['Widget'] = factory();
 }
