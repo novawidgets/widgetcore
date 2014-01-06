@@ -1,5 +1,12 @@
-(function(define, global) { 
-define([], function() {
+(function(root, factory) {
+if(typeof exports === 'object') {
+module.exports = factory();
+} else if(typeof define === 'function' && define.amd) {
+define([], factory);
+} else {
+root['Class'] = factory();
+}
+})(this, function() {
 
 // Inspired by base2 and Prototype
 
@@ -47,5 +54,4 @@ define([], function() {
 
     return Class;
 
-}); 
-}) ( typeof define === 'function' && define.amd ? define : function (name, requires, factory) { if(typeof name === 'function') { factory = name; } else if(typeof requires === 'function') { factory = requires; } if(typeof module != 'undefined'){ module.exports = factory(require); }else if(typeof window != 'undefined'){ window.Class= factory(); } }, this);
+});
