@@ -809,7 +809,7 @@
 
     // 检测element b是否在element a文档流中
     function contains(a, b) {
-        return !!(a.compareDocumentPosition(b) & 16);
+        return a.contains ? a != b && a.contains(b) : !!(a.compareDocumentPosition(b) & 16);
     }
 
     // 首字母大写
