@@ -3,6 +3,18 @@ define(['module/base/1.0.0/base'], function(Base) {
     
     describe('Aspect', function() {
         describe('before', function() {
+            it('this pointer should point to the base instance', function() {
+                var ins;
+                var Animal = Base.extend({
+                    sleep: function() {
+                        console.log('sleep');
+                    }
+                });
+                Animal.prototype.before('sleep', function() {
+                    expect(this).to.equal(ins);
+                });
+                ins = new Animal();
+            });
             it('before callback should be called before the bind function', function() {
                 var result;
                 var callback = sinon.spy(function() {
@@ -20,6 +32,18 @@ define(['module/base/1.0.0/base'], function(Base) {
                 var callback = function() {
                     result = this.a;
                     return false;
+                };
+                var ins = new Base();
+                var say = sinon.spy(function() {console.log('hello');});
+                ins.say = say;
+                ins.before('say', callback, context);
+                ins.say();
+                expect(say.callCount).to.equal(0);
+            });
+            it('the function should not be called if the before function called ev.preventDefault', function() {
+                var callback = function(ev) {
+                    result = this.a;
+                    ev.preventDefault();
                 };
                 var ins = new Base();
                 var say = sinon.spy(function() {console.log('hello');});

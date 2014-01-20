@@ -70,13 +70,14 @@
             className: null, 
             style: null,
 
-            // 事件代理
-            events: null,
-
             // 渲染模式使用
             template: '<div></div>',        // 根据template生成this.element
             parentNode: 'body'              // render时，将this.element插入到parentNode中
         },
+
+        // 事件代理
+        events: null,
+
         initialize: function(config) {
             config = this._parseConfig(config);
 
@@ -101,6 +102,10 @@
             // 将element放到this上，不作为Attribute
             this.element = config.element;
             delete config.element;
+
+            // 将events放到this上，不作为Attribue
+            this.events = $.extend(this.events || {}, config.events);
+            delete config.events;
 
             // 解析获得this.element上的data api
             var dataApi = parseDataApi(this.element);
@@ -221,7 +226,7 @@
 
             // 参数为空，绑定this.get('events')
             if(arguments.length == 0) {
-                events = me.get('events');
+                events = me.events;
                 element = me.element;
             } 
             // 写法delegateEvents({'click .btn': handler})
@@ -330,7 +335,7 @@
 
     // 检测element b是否在element a文档流中
     function contains(a, b) {
-        return !!(a.compareDocumentPosition(b) & 16);
+        return a.contains ? a != b && a.contains(b) : !!(a.compareDocumentPosition(b) & 16);
     }
 
     // 首字母大写

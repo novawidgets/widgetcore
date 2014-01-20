@@ -82,7 +82,8 @@ define(['module/widget/1.0.0/widget'], function(Widget) {
                 //expect(ins.$element.parent()[0]).to.equal($('.panel')[0]);
                 expect(ins.$element.hasClass('widgetclass1')).to.equal(true);
                 expect(ins.$element.attr('id')).to.equal('widgetid1');
-                expect(ins.$element.css('background-color')).to.equal('rgb(255, 0, 0)');
+                //expect(ins.$element.css('background-color')).to.equal('rgb(255, 0, 0)');
+                expect(ins.$element.css('background-color')).to.equal('red');
                 ins.destroy();
             });
         });
@@ -96,6 +97,47 @@ define(['module/widget/1.0.0/widget'], function(Widget) {
             });
         });
         describe('delegate and undelegate events', function() {
+            it('{$attrName} should read attrs', function() {
+                var callback = sinon.spy(function(ev) {
+                });
+                var My = Widget.extend({
+                    attrs: {
+                        selector: {
+                            trigger: '.btn'
+                        },
+                        template: '<div><a><button class="btn">Click me</button></a></div>',
+                    }, 
+                    setup: function() {
+                        this.render();
+                    },
+                    events: {
+                        'click {$selector.trigger}': callback
+                    }
+                });
+                var ins = new My();
+                ins.$element.find('.btn').click();
+                expect(callback.callCount).to.equal(1);
+                ins.destroy();
+            });
+            it('should delegate events passed within config', function() {
+                var callback = sinon.spy(function(ev) {
+                });
+                var My = Widget.extend({
+                    attrs: {
+                        template: '<div><a><button class="btn">Click me</button></a></div>',
+                    }, 
+                    setup: function() {
+                        this.render();
+                    },
+                    events: {
+                        'click .btn': callback
+                    }
+                });
+                var ins = new My();
+                ins.$element.find('.btn').click();
+                expect(callback.callCount).to.equal(1);
+                ins.destroy();
+            });
             it('should delegate events passed within config', function() {
                 var callback = sinon.spy(function(ev) {
                     console.log('this: ', this);

@@ -77,6 +77,16 @@ var Cat = Base.extend({
     }
 });
 ``` 
+#### CustEvent
+
+CustEvent对象的属性和方法  
+
+`target`: 事件派发者   
+`type`: 事件名称   
+`timeStamp`: 事件发生的时间戳  
+`preventDefault`: 该方法用于阻止后续绑定的处理函数的执行  
+
+
 #### function on(eventType, callback, [context])
 给对象绑定事件回调函数。*chainable*    
 `eventType`：事件名  
@@ -98,7 +108,7 @@ ins.off('change', onChange)        // 移除ins上change事件的名为onChange�
 ```
 
 #### function trigger([eventType], [Array args])
-触发一个或多个事件（用空格分离)。  *chainable*  
+触发一个或多个事件（用空格分离)。  
 `eventType`：事件名  
 `args`：传给回调函数的额外参数
 ```js
@@ -110,10 +120,7 @@ ins.trigger('change', [curValue, prevValue]);        // 触发change事件，传
 
 ins.trigger('change switch', [curValue, prevValue]);        // 触发change和switch事件
 ```
-回调函数中的第一个参数`ev`包含以下信息：  
-`ev.type`：事件名  
-`ev.timeStamp`：事件触发时的时间戳  
-`ev.target`：事件绑定对象
+回调函数中的第一个参数`ev`是一个CustEvent对象, 可通过调用ev.preventDefault()阻止后续绑定的处理函数的执行
 
 ### Attribute
 
@@ -280,53 +287,15 @@ var Person = Base.extend({
 当通过`set()`改变属性值时，会触发`change:attrName`事件。
 因此可通过 `this.on('change:attrName', function(ev, val, prev, data) { /* ... */ })`来监听属性更改。
 
+##### change:*事件
+可通过监听change:*事件，监听所有attribute的变化
+
 ##### change事件回调函数
 `function(ev, val, prev, data)`
 `ev`：事件基本信息  
 `val`：属性当前值  
 `prev`：属性原来的值  
 `data`：`set()`方法传入的options.data  
-
-##### _onChangeAttr
-继承时若有传入的`_onChangeAttr`方法，则会自动绑定到`change:attr`事件上。Example: 
-```js
-var Person = Base.extend({
-    attrs: {
-        age: 18
-    }, 
-    _onChangeAge: function(ev, prev, val, data) {
-        console.log('Happy birthday!!! ');
-    }
-});
-// 等同于
-var Person = Base.extend({
-    attrs: {
-        age: 18
-    }, 
-    initialize: function() {
-        this.on('change:age', function(ev, prev, val, data) {
-            console.log('Happy birthday!!!');
-        });
-    }
-});
-```
-
-##### onChangeAttr
-
-创建实例时，也可传入onChangeAttr方法，监听属性变更
-```js
-var Person = Base.extend({
-    attrs: {
-        age: 18
-    }
-});
-
-var p = new Person({
-    onChangeAge: function(ev, val, prev, data) { 
-        console.log('Happy birthday!!!'); 
-    }
-});
-```
 
 ### Aspect
 使用Aspect，允许你在制定方法执行的前后插入特定函数。
@@ -373,57 +342,6 @@ var Person = Base.extend({
 ```
 ##### 注意：
 `before`和`after`是按注册的先后顺序执行的，先注册先执行。
-
-##### _beforeMethod
-继承时若有传入的`_beforeMethod`方法，则会自动绑定到method执行前。Example: 
-```js
-var Person = Base.extend({
-    sleep: function() {
-        // ....
-    },
-    _beforesleep: function() {
-        console.log('Take a shower');
-    }
-});
-// 等同于
-var Person = Base.extend({
-    initialize: function() {
-        this.before('sleep', function(ev) {
-            console.log('Take a shower');
-        });
-    }, 
-    sleep: function() {
-        // ....
-    }
-});
-```
-
-##### beforeMethod
-
-创建实例时，也可传入beforeMethod方法
-```js
-var Person = Base.extend({
-    sleep: function() {
-        // ....
-    }
-});
-
-var p = new Person({
-    beforeSleep: function() { 
-        console.log('Take a shower'); 
-    }
-});
-```
-
-
-
-
-
-
-
-
-
-
 
 
 

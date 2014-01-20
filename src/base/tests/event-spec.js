@@ -18,6 +18,34 @@ define(['module/base/1.0.0/base'], function(Base) {
                 ins.trigger('activate');
                 expect(callback.callCount).to.equal(2);
             });
+            it('callback should be executed in the order its bound', function() {
+                var a;
+                var cb1 = function() {
+                    a = 1;
+                };
+                var cb2 = function() {
+                    a = 2;
+                };
+                var ins = new Base();
+                ins.on('activate', cb1);
+                ins.on('activate', cb2);
+                ins.trigger('activate');
+                expect(a).to.equal(2);
+            });
+            it('trigger only return true when all handlers return true', function() {
+                var a;
+                var cb1 = function(ev) {
+                    ev.preventDefault(); 
+                };
+                var cb2 = function() {
+                    a = 2;
+                };
+                var ins = new Base();
+                ins.on('activate', cb1);
+                ins.on('activate', cb2);
+                var result = ins.trigger('activate');
+                expect(result).to.equal(false);
+            });
             it('off() should unbind all handlers', function() {
                 var callback = sinon.spy();
                 var callback2 = sinon.spy();
