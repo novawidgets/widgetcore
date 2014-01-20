@@ -2,7 +2,7 @@
 if(typeof exports === 'object') {
 module.exports = factory();
 } else if(typeof define === 'function' && define.amd) {
-define(['base/1.0.2/class'], factory);
+define(['module/base/1.0.2/class'], factory);
 } else {
 root['Base'] = factory();
 }
