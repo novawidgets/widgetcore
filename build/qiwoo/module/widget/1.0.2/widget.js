@@ -2,7 +2,7 @@
 if(typeof exports === 'object') {
 module.exports = factory();
 } else if(typeof define === 'function' && define.amd) {
-define(['module/base/1.0.1/base'], factory);
+define(['module/base/1.0.2/base'], factory);
 } else {
 root['Widget'] = factory();
 }
@@ -81,13 +81,14 @@ Base = Base || this.Base;
             className: null, 
             style: null,
 
-            // 事件代理
-            events: null,
-
             // 渲染模式使用
             template: '<div></div>',        // 根据template生成this.element
             parentNode: 'body'              // render时，将this.element插入到parentNode中
         },
+
+        // 事件代理
+        events: null,
+
         initialize: function(config) {
             config = this._parseConfig(config);
 
@@ -112,6 +113,10 @@ Base = Base || this.Base;
             // 将element放到this上，不作为Attribute
             this.element = config.element;
             delete config.element;
+
+            // 将events放到this上，不作为Attribue
+            this.events = $.extend(this.events || {}, config.events);
+            delete config.events;
 
             // 解析获得this.element上的data api
             var dataApi = parseDataApi(this.element);
@@ -232,7 +237,7 @@ Base = Base || this.Base;
 
             // 参数为空，绑定this.get('events')
             if(arguments.length == 0) {
-                events = me.get('events');
+                events = me.events;
                 element = me.element;
             } 
             // 写法delegateEvents({'click .btn': handler})

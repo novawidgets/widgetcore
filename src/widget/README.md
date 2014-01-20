@@ -13,14 +13,13 @@ var Panel = Widget.extend({
     // 组件默认配置
     attrs: {
         className: 'panel', 
-        
-        events: {
-            'click .closeBtn': 'closePanel'
-        },
-
         template: '<div><p class="content"></div><button class="closeBtn">关闭</button></div>'
         parentNode: 'body'
     }, 
+
+    events: {
+        'click .closeBtn': 'closePanel'
+    },
 
     // 组件初始化方法
     setup: function() {
@@ -105,15 +104,13 @@ this.undelegateEvents(eventKey);
 this.undelegateEvents();
 ```
 
-### 在attrs中声明代理事件
+### 声明代理事件
 ```js
 var MyWidget = Widget.extend({
-    attrs: {
-        events: {
-            "dblclick": "open",
-            "click .icon.doc": "select",
-            "mouseover .date": "showTooltip"
-        }
+    events: {
+        "dblclick": "open",
+        "click .icon.doc": "select",
+        "mouseover .date": "showTooltip"
     },
     open: function() {
         ...
@@ -125,16 +122,16 @@ var MyWidget = Widget.extend({
 });
 ```
 
-#### events中支持{{attrName}}表达式
+#### events中支持{$attrName}表达式
 ```js
 var MyWidget = Widget.extend({
     attrs: {
-        events: {
-            "click {{selectors.nextControl}}": "next"
-        },
         selectors: {
             nextControl: '.next-control'
         }
+    },
+    events: {
+        "click {$selectors.nextControl}": "next"
     },
     next: function() {
         ...
@@ -190,9 +187,7 @@ var tab = Widget.query('.tab');
 
 ## _onRenderAttr
 
-Widget使用了Attribute, 支持_onChangeAttr, 另外它还做了一层扩展。提供了_onRenderAttr机制。  
-
-_onChangeAttr在属性初始化时不会触发，只会在属性改变时触发。而_onRenderAttr会在以下两种情况下触发：  
+_onRenderAttr方法会在以下两种情况下触发：  
 1. 属性改变时  
 2. 在调用render方法时（插入到文档流之前），但属性值为null或undefined时则不会触发。
 

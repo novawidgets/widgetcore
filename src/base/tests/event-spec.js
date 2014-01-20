@@ -18,6 +18,34 @@ define(['module/base/1.0.0/base'], function(Base) {
                 ins.trigger('activate');
                 expect(callback.callCount).to.equal(2);
             });
+            it('callback should be executed in the order its bound', function() {
+                var a;
+                var cb1 = function() {
+                    a = 1;
+                };
+                var cb2 = function() {
+                    a = 2;
+                };
+                var ins = new Base();
+                ins.on('activate', cb1);
+                ins.on('activate', cb2);
+                ins.trigger('activate');
+                expect(a).to.equal(2);
+            });
+            it('trigger only return true when all handlers return true', function() {
+                var a;
+                var cb1 = function(ev) {
+                    ev.preventDefault(); 
+                };
+                var cb2 = function() {
+                    a = 2;
+                };
+                var ins = new Base();
+                ins.on('activate', cb1);
+                ins.on('activate', cb2);
+                var result = ins.trigger('activate');
+                expect(result).to.equal(false);
+            });
             it('off() should unbind all handlers', function() {
                 var callback = sinon.spy();
                 var callback2 = sinon.spy();
@@ -54,6 +82,41 @@ define(['module/base/1.0.0/base'], function(Base) {
                 ins.off('activate reset');
                 ins.trigger('activate reset');
                 expect(callback.callCount).to.equal(2);
+            });
+            it('an event should generate a public event object for its handlers', function() {
+                var tempEv;
+                var ins = new Base();
+
+                ins.on('test', function(ev) {
+                    tempEv = ev;
+                });
+                ins.on('test', function(ev) {
+                    expect(ev).to.equal(tempEv);
+                });
+            });
+            it('ev.preventDefault() should prevent the after bound handlers', function() {
+                var callback = sinon.spy();
+                var ins = new Base();
+
+                ins.on('test', function(ev) {
+                    ev.preventDefault();
+                })
+                ins.on('test', callback);
+
+                ins.trigger('test');
+                expect(callback.callCount).to.equal(0);
+            });
+            it('a false return value should prevent the after bound handlers', function() {
+                var callback = sinon.spy();
+                var ins = new Base();
+
+                ins.on('test', function(ev) {
+                    return false;
+                })
+                ins.on('test', callback);
+
+                ins.trigger('test');
+                expect(callback.callCount).to.equal(0);
             });
         });
 
@@ -94,6 +157,18 @@ define(['module/base/1.0.0/base'], function(Base) {
                         expect(arg3).to.equal(undefined);
                     });
                     ins.trigger('activate', [1, 2]);
+                });
+                it('should be trigger in the order when its bound', function() {
+                    var ins = new Base();
+                    var a = 0;
+                    ins.on('activate', function() {
+                        a = 1;
+                    });
+                    ins.on('activate', function() {
+                        a = 2;
+                    });
+                    ins.trigger('activate');
+                    expect(a).to.equal(2);
                 });
         });
 

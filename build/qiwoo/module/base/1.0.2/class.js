@@ -28,7 +28,6 @@ root['Class'] = factory();
         // Copy the properties over onto the new prototype
         for (var name in prop) {
             prototype[name] = prop[name];
-            prop[name];
         }
 
         // The dummy class constructor

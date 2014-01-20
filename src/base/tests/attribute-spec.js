@@ -92,7 +92,8 @@ define(['module/base/1.0.0/base'], function(Base) {
                     a: {
                         value: {b: { c: 1}},
                         mergeOnInit: true
-                    } 
+                    },
+                    arr: [1, 2, 3] 
                 }});
 
                 var dog = new Animal();
@@ -104,7 +105,6 @@ define(['module/base/1.0.0/base'], function(Base) {
 
                 expect(dog.set('a.c.d', {e:1})).to.equal(false);
                 expect(dog.get('a.c.d.e')).to.equal(undefined);
-
                 expect(dog.set('a.b', {e:1}, {merge: true})).to.equal(true);
                 expect(dog.get('a.b.e')).to.equal(1);
                 expect(dog.get('a.b.c')).to.equal(2);
@@ -116,6 +116,7 @@ define(['module/base/1.0.0/base'], function(Base) {
                 expect(dog.get('a.b')).to.equal(30);
                 expect(dog.get('a.b.c')).to.equal(undefined);
 
+                expect(dog.get('arr.length')).to.equal(3);
             });
         });
         describe('change event', function() {
@@ -127,13 +128,18 @@ define(['module/base/1.0.0/base'], function(Base) {
                         a: 1,
                         b: 1
                     },
-                    _onChangeA: function(ev, val, prev, name, options) {
+                    aHandler: function(ev, val, prev, name, options) {
                         expect(val).to.equal(2);
                         expect(prev).to.equal(1);
                         expect(name).to.equal('a');
                         expect(options.b).to.equal(1);
                     },
-                    _onChangeB: callback2
+                    bHandler: callback2,
+                    initialize: function() {
+                        this.constructor.superclass.initialize.apply(this);
+                        this.on('change:a', this.aHandler);
+                        this.on('change:b', this.bHandler);
+                    }
                 });
                 var dog = new Animal();
                 dog.on('change:a', callback);
@@ -159,6 +165,49 @@ define(['module/base/1.0.0/base'], function(Base) {
                 expect(dog.get('a')).to.equal(5);
                 expect(dog.get('e')).to.equal(3);
                 expect(dog.get('b.c')).to.equal(4);
+            });
+        });
+        describe('change:*', function() {
+            it('handler should listen for all attributes', function() {
+                var cb = sinon.spy(function() {
+                });
+                var Animal = Base.extend({
+                    attrs: {
+                        a: 1, 
+                        b: 1
+                    },
+                    initialize: function() {
+                        this.constructor.superclass.initialize.apply(this);
+                        this.on('change:*', cb);
+                    }
+                });
+                var ins = new Animal();
+                ins.set('a', 2);
+                ins.set('b', 2);
+                expect(cb.callCount).to.equal(2);
+            });
+        });
+        describe('initialize', function() {
+            it('the first call wouldnt trigger change:attrName event', function() {
+                var cb = sinon.spy(function() {
+                    console.log(arguments);
+                });
+                var Animal = Base.extend({
+                    attrs: {
+                        a: {
+                            value: 1, 
+                            setter: function(val) {
+                                return val + 'px';
+                            }
+                        }
+                    },
+                    initialize: function() {
+                        this.on('change:a', cb);
+                        this.constructor.superclass.initialize.apply(this, arguments);
+                    }
+                });
+                var ins = new Animal({a:2});
+                expect(cb.callCount).to.equal(0);
             });
         });
     });

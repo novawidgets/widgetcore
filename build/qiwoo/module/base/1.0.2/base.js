@@ -2,7 +2,7 @@
 if(typeof exports === 'object') {
 module.exports = factory();
 } else if(typeof define === 'function' && define.amd) {
-define(['module/base/1.0.1/class'], factory);
+define(['module/base/1.0.2/class'], factory);
 } else {
 root['Base'] = factory();
 }
@@ -46,12 +46,28 @@ Class = Class || this.Class;
     * this.after(methodName, callback, context)
     *
     * */
+
+    var CustEvent = Class.extend({
+        initialize: function(target, type, eventArgs) {
+            $.extend(this, {
+                target: target,                   
+                type: type, 
+                timeStamp: new Date() - 0,
+            }, eventArgs);
+        },
+
+        _defaultPrevented: false, 
+
+        // 阻止任何该事件的处理函数被调用
+        preventDefault: function() {
+            this._defaultPrevented = true;
+        }
+    });
+
     var Base = Class.extend({
         // Base生命周期
         initialize: function(config) {
             config = config || {};
-            this._parseEventsFromConfig(config);
-            this._parseEventsFromInstance();
             this._initAttrs(config);
         },
         destroy: function() {
@@ -64,16 +80,6 @@ Class = Class || this.Class;
             this.destroy = function() {};
         },
 
-        // 解析prototype上得 _onChangeX, _beforeMethod, _afterMethod 
-        _parseEventsFromInstance: function() {
-            parseEvents(this, $.extend({}, this), INSTANCE_EVENT_PATTERN);
-        },
-
-        // 解析配置上的onChangeX, beforeMethod, afterMethod 
-        _parseEventsFromConfig: function(config) {
-            parseEvents(this, config, CONFIG_EVENT_PATTERN);
-        },
-
         /***************************** Events ******************************/
 
         on: function(events, callback, context) {
@@ -81,7 +87,7 @@ Class = Class || this.Class;
 
             if(!callback) return this;
             
-            cache = (this._events = this._events || {});
+            cache = (this.__events = this.__events || {});
             events = events.split(EVENT_SPLITTER);
             while(event = events.shift()) {
                  cache[event] = cache[event] || [];
@@ -94,11 +100,11 @@ Class = Class || this.Class;
         // this.off('switch') 清除全部switch事件的处理函数
         // this.off('switch', 'fun1'); 清除switch事件的fun1处理函数
         off: function(events, callback) {
-            var cache = this._events, event;
+            var cache = this.__events, event;
 
             // 全部为空，则清除全部handler
             if(!(events || callback)) {
-                delete this._events;
+                delete this.__events;
                 return this;
             }
             events = events.split(EVENT_SPLITTER);
@@ -122,26 +128,40 @@ Class = Class || this.Class;
 
         // this.trigger('switch', [args1, args2]);
         // this.trigger('switch change', [args1, args2]);
+        // @return true/false
         trigger: function(events) {
-            var cache = this._events, event, 
-                me = this;
+            var cache = this.__events, event, 
+                me = this, 
+                returnValue = true;
 
             if(!cache) return me;
 
             events = events.split(EVENT_SPLITTER);
             while(event = events.shift()) {
                 var handlers = cache[event];
+                var ev = new CustEvent(me, event);
                 if(handlers) {
-                    for(var len = handlers.length, i = len - 2; i >= 0; i -=2 ) {
+                    for(var i = 0, len = handlers.length; i < len; i += 2) {
                         var ctx = handlers[i + 1] || me;
                         var args = arguments[1] ? arguments[1].slice() : [];
-                        args.unshift({type: event, target: me, timeStamp: (new Date()) - 0});
+                        args.unshift(ev);
+
                         var ret = handlers[i].apply(ctx, args); 
-                        if(ret == false) {me._preventDefault = true;}
+
+                        // 当callback返回false时，阻止事件继续触发
+                        if(ret === false) {
+                            ev.preventDefault();
+                        }
+
+                        if(ev._defaultPrevented) {
+                            returnValue = false;
+                            break;
+                        }
+
                     }
                 }
             }
-            return me;
+            return returnValue;
         },
 
         /**************************** Aspect *******************************/
@@ -209,12 +229,15 @@ Class = Class || this.Class;
 
                 // 设置子属性，如set('a.b.c') 
                 if(isSubAttr) {
-                    var newValue = $.extend({}, prevVal.value);
-                    var subAttr = getSubproperty(newValue, path.slice(1, -1));  
-                    if(subAttr == ATTRIBUTE.INVALID_VALUE || !$.isPlainObject(subAttr)) {
+                    // 获得a.b，如果a.b为undefined，或者不是plain object。则set失败
+                    var subAttr = getProperty(prevVal.value, path.slice(1, -1).join('.'));
+                    if(subAttr == undefined || !$.isPlainObject(subAttr)) {
                         setStatus = false;
                         return;
                     }
+
+                    var newValue = $.extend({}, prevVal.value);
+                    subAttr = getProperty(newValue, path.slice(1, -1).join('.'));
                     subAttr[path[path.length - 1]] = val;
                     val = newValue;
                 }
@@ -238,6 +261,7 @@ Class = Class || this.Class;
                 now[attrName].value = val;
                 if(!options.silent) {
                     me.trigger('change:' + attrName, [me.get(attrName), prevVal, name, options.data]); 
+                    me.trigger('change:*', [me.get(attrName), prevVal, name, options.data]); 
                 }
             });
 
@@ -280,7 +304,7 @@ Class = Class || this.Class;
                 }
 
                 // 根据path返回
-                val =  getSubproperty(val, path.slice(1)) ;
+                val = getProperty(val, path.slice(1).join('.'));
                 return val == ATTRIBUTE.INVALID_VALUE ? undefined : val;
             }
         },
@@ -295,8 +319,7 @@ Class = Class || this.Class;
 
             // 获取原型链 
             var protochain = [],                            
-                proto = me.constructor.prototype,            
-                curProto = proto; 
+                proto = me.constructor.prototype;            
             while(proto && !$.isEmptyObject(proto)) {
                 protochain.push(proto);
                 proto = proto.constructor.superclass;
@@ -323,36 +346,13 @@ Class = Class || this.Class;
             // 调用setter初始化value
             $.each(config, function(name, val) {
                 if(curAttrs[name].setter) {
-                    me.set(name, val, null, true);
+                    me.set(name, val, {silent: true});
                 } 
             });
         }
 
 
     });
-
-    /**************************** Events parser helpers *******************************/
-
-    // 解析prototype和config中的onChangeAttr, beforeMethod, afterMethod等事件
-    function parseEvents(widget, obj, pattern) {
-        $.each(obj, function(name, fun) {
-            var m = name.match(pattern);
-            if(!m || !fun ||  $.type(fun) != 'function') return;
-            if(m[1] == 'onChange') {
-                var attrName = firstLetterLc(m[2]);
-                widget.on('change:' + attrName, fun); 
-            }
-            else {
-                var when = m[1];        // before/after
-                var methodName = firstLetterLc(m[2]);
-
-                if($.type(widget[methodName] == 'function')) {
-                    widget[when](methodName, fun);
-                }
-            }
-            delete obj[name];
-        }); 
-    }
 
 
     /**************************** Attribute Helpers *******************************/
@@ -397,6 +397,22 @@ Class = Class || this.Class;
         }
     }
 
+    // eg. getProperty(obj, 'a.b.c')会返回obj.a.b.c
+    function getProperty(obj, prop) {
+        var keys = prop ? prop.split(".") : [];
+        var ret = obj;
+
+        for(var i = 0, len = keys.length; i < len; i++) {
+            if(ret == undefined) {
+                return;
+            }
+            ret = ret[keys[i]];
+        }
+
+        return ret;
+    }
+
+
     /***************************** Apspect helpers ******************************/
 
     // 将callback绑定到methodName执行的前/后时触发
@@ -414,19 +430,17 @@ Class = Class || this.Class;
     }
 
     function wrap(methodName) {
+        var method = this[methodName];
+        var ret, beforeFunRet;
         var me = this;
-        var method = me[methodName];
-        var ret;
-        me[methodName] = function() {
-            me._preventDefault = false;  
-            // trigger时，如果回调函数返回false, 回将me._preventDefault置为true
-            me.trigger('before:' + methodName, Array.prototype.slice.call(arguments));
-            if(me._preventDefault) {return;}
-            ret = method.apply(me, arguments);
-            me.trigger('after:' + methodName, Array.prototype.slice.call(arguments));
+        this[methodName] = function() {
+            beforeFunRet = this.trigger('before:' + methodName, Array.prototype.slice.call(arguments));
+            if(beforeFunRet === false) { return; }
+            ret = method.apply(this, arguments);
+            this.trigger('after:' + methodName, Array.prototype.slice.call(arguments));
             return ret;
         };
-        me[methodName]._isAspected = true;
+        this[methodName]._isAspected = true;
     }
 
     // 将字符串转为首字母小写

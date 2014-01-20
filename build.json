@@ -1,6 +1,6 @@
 {
     "class": {
-        "version": "1.0.1",
+        "version": "1.0.2",
         "files" : {
         },
         "module": "base",
@@ -9,17 +9,17 @@
         }
     },
     "base": {
-        "version": "1.0.1",
+        "version": "1.0.2",
         "files": {
         },
         "module": "base",
         "src": "src/base/base.js",
         "requires": {
-            "class": "base/1.0.1/class"
+            "class": "module/base/1.0.2/class"
         }
     },
     "widget": {
-        "version": "1.0.1",
+        "version": "1.0.2",
         "files": {
             "build/widget.js" : [
                 "src/base/class.js",
@@ -30,7 +30,7 @@
         "module": "widget",
         "src": "src/widget/widget.js",
         "requires": {
-            "base": "base/1.0.1/base"
+            "base": "module/base/1.0.2/base"
         }
     }
 }
