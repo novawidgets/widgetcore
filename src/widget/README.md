@@ -104,7 +104,7 @@ this.undelegateEvents(eventKey);
 this.undelegateEvents();
 ```
 
-### 在attrs中声明代理事件
+### 声明代理事件
 ```js
 var MyWidget = Widget.extend({
     events: {
