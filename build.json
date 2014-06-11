@@ -15,7 +15,7 @@
         "module": "base",
         "src": "src/base/base.js",
         "requires": {
-            "class": "module/base/1.0.2/class"
+            "Class": "module/base/1.0.2/class"
         }
     },
     "widget": {
@@ -30,7 +30,9 @@
         "module": "widget",
         "src": "src/widget/widget.js",
         "requires": {
-            "base": "module/base/1.0.2/base"
+            "Base": "module/base/1.0.2/base"
         }
     }
 }
+
+hahaha
